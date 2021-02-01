@@ -32,14 +32,15 @@ const App = () => {
         container: 'map',
         // See style options here: https://docs.mapbox.com/api/maps/#styles
         style: "mapbox://styles/mapbox/streets-v11",
-        center: [-85.283796, 36],
-        zoom: 3.5
+        center: [ -115.2780982990751, 36.15243],
+        // center: [-85.283796, 36],
+        zoom: 6
     });
 
     function flyToStore(currentFeature) {
         map.flyTo({
             center: currentFeature.properties.latlng,
-            zoom: 3.5
+            zoom: 6.5
         });
     }
 
@@ -84,7 +85,7 @@ const App = () => {
         });
 
         TICK++;
-        if (TICK < 500) {
+        if (TICK < 800) {
             requestAnimationFrame(animate);
         }
 
@@ -289,7 +290,46 @@ const App = () => {
             var listing = document.getElementById('listing-' + e.features[0].properties.droneID);
             listing.classList.add('active');
         });
+
+        var popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        map.on('mouseenter', 'sourcePointslayer', function (e) {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+            var coordinates = e.features[0].geometry.coordinates.slice();
+            popup.setLngLat(coordinates).setHTML(coordinates).addTo(map);
+        });
+        map.on('mouseleave', 'sourcePointslayer', function () {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+
+        map.on('mouseenter', 'endPointslayer', function (e) {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+            var coordinates = e.features[0].geometry.coordinates.slice();
+            popup.setLngLat(coordinates).setHTML(coordinates).addTo(map);
+        });
+        map.on('mouseleave', 'endPointslayer', function () {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+
+
         buildLocationList(drone_info_feat);
+
+        document
+            .getElementById('reset-zoom')
+            .addEventListener('click', function () {
+            // Set the coordinates of the original point back to origin
+                map.flyTo({
+                center: [ -115.2780982990751, 36.15243],
+                zoom: 6
+            });
+        });
 
     }
 
@@ -394,10 +434,21 @@ const App = () => {
     // when component mounts
     useEffect(() => {
         // add navigation control (zoom buttons)
-        map.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new mapboxgl.FullscreenControl({container: document.querySelector('body')}));
+        var popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+        
+ 
+
+
         map.on("load", () => {
             initDrones();
         });
+
+
     }, []);
 
     return ( <

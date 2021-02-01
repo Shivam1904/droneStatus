@@ -24,7 +24,7 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>Drone Status</title>
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -45,14 +45,17 @@
         </div>
     </div> -->
     <div class="row">
-      <div class='sidebar col-sm-2 px-1 position-fixed'>
+      <div class='sidebar col-2 px-1 position-fixed'>
         <div class='heading'>
           <h4>Drone Flight Data</h4>
         </div>
         <div id='listings' class='listings'></div>
       </div>
 
-      <div id='map' class='col offset-3 map'>
+      <div id='map' class='col offset-2 map'>
+      </div>
+      <div class="overlay">
+        <button id="reset-zoom">Reset Zoom</button>
       </div>
     </div>
 
