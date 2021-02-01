@@ -168,8 +168,8 @@ const App = () => {
           details.innerHTML = prop.droneID;
 
           link.addEventListener('click', function(e){
-          focusPopup(this.id);
-        });
+            focusPopup(this.id);
+          });
         
       }
       });

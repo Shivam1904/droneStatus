@@ -12,8 +12,8 @@ mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 const App = () => {
     const mapContainerRef = useRef(null);
+
     const dronesUrl = "http://localhost:5000/";
-    const dronesSingleUrl = "http://localhost:5000/single/";
 
     var TICK = 0;
     var drone_info, drone_info_feat;
@@ -22,19 +22,8 @@ const App = () => {
     var sourcePoints = [],
         endPoints = [],
         currentdrones = [];
-
-
-
-
-    var drone_data;
     var selected_drone = null;
-    // var route;
 
-    // var point;
-    var listMarkers = [];
-    // var counter = 0;
-    var initialListLen = 2;
-    var steps = 500;
 
     // Initialize map  
     const map = new mapboxgl.Map({
@@ -70,7 +59,6 @@ const App = () => {
     }
 
     function animate() {
-
         frontarcRoute = [];
         backarcRoute = [];
         currentdrones = [];
@@ -79,6 +67,7 @@ const App = () => {
             var drone = dr.properties;
             setPosition(drone);
         });
+
         map.getSource('frontarc').setData({
             "type": "FeatureCollection",
             "features": frontarcRoute
@@ -97,14 +86,9 @@ const App = () => {
             requestAnimationFrame(animate);
         }
 
-        console.log("TICKTICKTICK", TICK);
-
-
     }
 
     function setDroneArc(drone) {
-        // drone_info_feat.forEach((dr)=> {
-
         var turf_data = {
             "type": "Feature",
             "geometry": {
@@ -115,26 +99,133 @@ const App = () => {
                 "step": drone.droneDuration
             }
         };
-
-        // console.log("I am aw ", drone, turf_data)
-
         var arc = get_arc_coordinates(turf_data);
         drone.arc = arc;
 
     }
 
+    function createLineData(route_list, name){
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": route_list
+            },
+            "properties": {
+                "arcID": name + "route"
+            }
+        };
+    }
+
+    function createPointData(coord, drone_id, name){
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": coord
+            },
+            "properties": {
+                "id": name + "_point",
+                "droneID": drone_id
+            }
+        };
+    }
+
+    function createDroneData(coord, drone, name){
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": coord
+            },
+            "properties": {
+                "bearing": drone.bearing,
+                "id": name + "_point",
+                "droneID": drone.droneID
+            }
+        };
+    }
+
+    function createGeoJSONFeature(features){
+        return {
+            'type': 'geojson',
+            'data': {
+                "type": "FeatureCollection",
+                "features": features
+            }
+        }
+    }
+
+    function createLineFeature(features){
+        return {
+            'type': 'geojson',
+            'data': {
+                "type": "FeatureCollection",
+                "features": features
+            }
+        }
+    }
+
+    function createLineLayerData(name, source, line_color, line_width){
+        return {
+            'id': name+"layer",
+            'source': source,
+            'type': 'line',
+            'paint': {
+                'line-color': line_color,
+                'line-width': line_width
+            }
+        }
+    }
+
+    function createLineLayerData(source, line_color, line_width){
+        return {
+            'id': source+"layer",
+            'source': source,
+            'type': 'line',
+            'paint': {
+                'line-color': line_color,
+                'line-width': 2
+            }
+        }
+    }
+
+    function createSymbolLayerData(source, icon, icon_size){
+        return {
+            'id': source+'layer',
+            'source': source,
+            'type': 'symbol',
+            'layout': {
+                'icon-image': icon,
+                'icon-size': icon_size,
+                'icon-rotate': ['get', 'bearing'],
+                'icon-rotation-alignment': 'map',
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true
+            },
+            "paint": {
+                "icon-color": "#00ff00"
+            }
+
+        }
+    }
+
     function setPosition(drone) {
 
         var current_idx = TICK - drone.droneStartTime;
+        
         if (current_idx-1 < 0) {
             current_idx = 1;
         }
         if (current_idx >= drone.droneDuration - 1) {
             current_idx = drone.droneDuration - 2;
         }
+
         drone.droneCurrentIdx = current_idx;
+        
         var arc = drone.arc;
         drone.latlng = arc[current_idx];
+        
         var frontarc, backarc;
         frontarc = arc.slice(0, current_idx);
         backarc = arc.slice(current_idx + 1);
@@ -145,191 +236,33 @@ const App = () => {
         );
         drone.bearing = bearing;
 
-        console.log("B", bearing)
-        // console.log("Slice", arc, frontarc, backarc)
-        frontarcRoute.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "LineString",
-                "coordinates": frontarc
-            },
-            "properties": {
-                "arcID": "frontroute"
-            }
-        });
 
+        frontarcRoute.push(createLineData(frontarc, "front"));
+        backarcRoute.push(createLineData(backarc, "back"));
 
-        backarcRoute.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "LineString",
-                "coordinates": backarc
-            },
-            "properties": {
-                "arcID": "backroute"
-            }
-        });
+        sourcePoints.push(createPointData(drone.droneSrc, drone.droneID, "src"));
+        endPoints.push(createPointData(drone.droneDst, drone.droneID, "dst"));
+        
+        currentdrones.push(createDroneData(arc[current_idx], drone, "drone"));
 
-
-        sourcePoints.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": drone.droneSrc
-            },
-            "properties": {
-                "id": "src_point",
-                "droneID": drone.droneID
-            }
-        });
-
-
-        endPoints.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": drone.droneDst
-            },
-            "properties": {
-                "id": "dst_point",
-                "droneID": drone.droneID
-            }
-        });
-
-        console.log("current_idx", arc[current_idx])
-        currentdrones.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": arc[current_idx]
-            },
-            "properties": {
-                "bearing": drone.bearing,
-                "id": "drone_loc",
-                "droneID": drone.droneID
-            }
-        });
     }
 
     function initSources() {
+        map.addSource("frontarc", createGeoJSONFeature(frontarcRoute));
+        map.addSource("backarc", createGeoJSONFeature(backarcRoute));
+        map.addSource("sourcePoints", createGeoJSONFeature(sourcePoints));
+        map.addSource("endPoints", createGeoJSONFeature(endPoints));
+        map.addSource("currentdrones", createGeoJSONFeature(currentdrones));
 
-        map.addSource("frontarc", {
-            'type': 'geojson',
-            'lineMetrics': true,
-            'data': {
-                "type": "FeatureCollection",
-                "features": frontarcRoute
-            }
-        });
+        map.addLayer(createLineLayerData("frontarc", "red", 2));
+        map.addLayer(createLineLayerData("backarc", "blue", 2));
 
-        map.addSource("backarc", {
-            'type': 'geojson',
-            'lineMetrics': true,
-            'data': {
-                "type": "FeatureCollection",
-                "features": backarcRoute
-            }
-        });
-
-        map.addSource("sourcePoints", {
-            'type': 'geojson',
-            'data': {
-                "type": "FeatureCollection",
-                "features": sourcePoints
-            }
-        });
-
-        map.addSource("endPoints", {
-            'type': 'geojson',
-            'data': {
-                "type": "FeatureCollection",
-                "features": endPoints
-            }
-        });
-
-        map.addSource("currentdrones", {
-            'type': 'geojson',
-            'data': {
-                "type": "FeatureCollection",
-                "features": currentdrones
-            }
-        });
-
-
-        map.addLayer({
-            'id': "frontarclayer",
-            'source': "frontarc",
-            'type': 'line',
-            'paint': {
-                'line-color': 'red',
-                'line-width': 2
-            }
-        });
-
-        map.addLayer({
-            'id': "backarclayer",
-            'source': "backarc",
-            'type': 'line',
-            'paint': {
-                'line-color': 'green',
-                'line-width': 2
-            }
-        });
-
-
-        map.addLayer({
-            'id': 'srcpointlayer',
-            'source': 'sourcePoints',
-            'type': 'symbol',
-            'layout': {
-                'icon-image': 'marker-11',
-                'icon-size': 2,
-                'icon-rotate': ['get', 'bearing'],
-                'icon-rotation-alignment': 'map',
-                'icon-allow-overlap': true,
-                'icon-ignore-placement': true
-            }
-        });
-
-        map.addLayer({
-            'id': 'dstpointlayer',
-            'source': 'endPoints',
-            'type': 'symbol',
-            'layout': {
-                'icon-image': 'marker-15',
-                'icon-size': 3,
-                'icon-rotate': ['get', 'bearing'],
-                'icon-rotation-alignment': 'map',
-                'icon-allow-overlap': true,
-                'icon-ignore-placement': true
-            }
-        });
-
-        map.addLayer({
-            'id': 'currentdroneslayer',
-            'source': 'currentdrones',
-            'type': 'symbol',
-            'layout': {
-                'icon-image': 'airport-15',
-                'icon-size': 2,
-                'icon-rotate': ['get', 'bearing'],
-                'icon-rotation-alignment': 'map',
-                'icon-allow-overlap': true,
-                'icon-ignore-placement': true
-            }
-        });
+        map.addLayer(createSymbolLayerData("sourcePoints", 'marker-11', 2));
+        map.addLayer(createSymbolLayerData("endPoints", 'marker-15', 3));
+        map.addLayer(createSymbolLayerData("currentdrones", 'airport-15', 1.5));
 
         buildLocationList(drone_info_feat);
 
-
-        // map.addSource('point', {
-        //   'type': 'geojson',
-        //   'data': point
-        // });
-
-        // map.on('click', 'point', function (e) {
-        //   focusPopup("link-" + e.features[0].properties.droneID);
-        // });
     }
 
     function getClickedDrone(id) {
@@ -380,9 +313,6 @@ const App = () => {
         });
     }
 
-    // function moveToLocation(drone, coordinates){
-    //   drone.setLngLat(coordinates);
-    // }
 
     function movePopup() {
         if (selected_drone) {
