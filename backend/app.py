@@ -37,47 +37,6 @@ def make_mapboxdata(drone_list):
     return point_data
 
 
-# def make_mapboxdatasingle(drone_list, i):
-#     route_data = {
-#         'type': 'FeatureCollection',
-#         'features': []
-#     }
-
-#     point_data = {
-#         'type': 'FeatureCollection',
-#         'features': []
-#     }
-
-#     point_feat = {
-#         'type': 'Feature',
-#         "properties": {
-#             "name": drone.get("droneName"),
-#             "droneID": drone.get("droneID"),
-#                 "status":  drone.get("droneStatus"),
-#         },
-#         'geometry': {
-#             'type': 'Point',
-#             'coordinates': drone["locations"]["current"]
-#         }
-#     }
-
-#     route_data["features"].append(route_feat)
-#     point_data["features"].append(point_feat)
-
-#     response = {
-#         "route": route_data["features"][i],
-#         "point": point_data["features"][i]
-#     }
-
-#     return response
-
-
-# @app.route('/single/')
-# def single():
-#     drone = make_mapboxdatasingle(conf.DUMMY_DRONE_INFO, 0)
-#     return jsonify(drone)
-
-
 @app.route('/')
 def home():
     drone_list = make_mapboxdata(conf.DUMMY_DRONE_INFO)
