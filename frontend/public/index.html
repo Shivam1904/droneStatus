@@ -33,29 +33,22 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!-- <div class="container-fluid">
-        <div class="row">
-            <div class="col-2 px-1 position-fixed" id="done-sidebar">
-              <h4>Drone Flight Data</h4>
-              <div id='listings' class='listings'></div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class='sidebar col-2'>
+          <div class='heading'>
+            <h4>Drone Flight Data</h4>
+            <div class="overlay">
+              <button id="reset-zoom">Reset Zoom</button>
             </div>
-            <div class="col offset-3" id="main">
-                <div id='map' class='map'>Map</div>
-            </div>
+          </div>
+          <div id='listings' class='listings'></div>
         </div>
-    </div> -->
-    <div class="row">
-      <div class='sidebar col-2 px-1 position-fixed'>
-        <div class='heading'>
-          <h4>Drone Flight Data</h4>
-        </div>
-        <div id='listings' class='listings'></div>
-      </div>
 
-      <div id='map' class='col offset-2 map'>
-      </div>
-      <div class="overlay">
-        <button id="reset-zoom">Reset Zoom</button>
+        <div class='col-10'>
+          <div id='map' class='mapbox-gl'> 
+          </div>
+        </div>
       </div>
     </div>
 

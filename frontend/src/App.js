@@ -37,6 +37,7 @@ const App = () => {
         zoom: 6
     });
 
+
     function flyToStore(currentFeature) {
         map.flyTo({
             center: currentFeature.properties.latlng,
@@ -62,6 +63,7 @@ const App = () => {
     }
 
     function animate() {
+        map.resize();
         frontarcRoute = [];
         backarcRoute = [];
         currentdrones = [];
@@ -282,6 +284,7 @@ const App = () => {
         map.addLayer(createSymbolLayerData("currentdrones", 'airport-15', 1.5));
 
         map.on('click', 'currentdroneslayer', function (e) {
+            console.log("I am getting clicked");
             focusPopup("link-"+e.features[0].properties.droneID);
             var activeItem = document.getElementsByClassName('active');
             if (activeItem[0]) {
@@ -300,7 +303,10 @@ const App = () => {
             // Change the cursor style as a UI indicator.
             map.getCanvas().style.cursor = 'pointer';
             var coordinates = e.features[0].geometry.coordinates.slice();
-            popup.setLngLat(coordinates).setHTML(coordinates).addTo(map);
+            var lat, lng;
+            lat = coordinates[0].toFixed(3);
+            lng = coordinates[1].toFixed(3);
+            popup.setLngLat(coordinates).setHTML(lat +', ' + lng).addTo(map);
         });
         map.on('mouseleave', 'sourcePointslayer', function () {
             map.getCanvas().style.cursor = '';
@@ -311,7 +317,10 @@ const App = () => {
             // Change the cursor style as a UI indicator.
             map.getCanvas().style.cursor = 'pointer';
             var coordinates = e.features[0].geometry.coordinates.slice();
-            popup.setLngLat(coordinates).setHTML(coordinates).addTo(map);
+            var lat, lng;
+            lat = coordinates[0].toFixed(3);
+            lng = coordinates[1].toFixed(3);
+            popup.setLngLat(coordinates).setHTML(lat +', ' + lng).addTo(map);
         });
         map.on('mouseleave', 'endPointslayer', function () {
             map.getCanvas().style.cursor = '';
@@ -445,6 +454,7 @@ const App = () => {
 
 
         map.on("load", () => {
+            map.resize();
             initDrones();
         });
 
