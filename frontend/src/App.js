@@ -37,7 +37,7 @@ const App = () => {
     function flyToStore(currentFeature) {
         map.flyTo({
             center: currentFeature.properties.latlng,
-            zoom: 4
+            zoom: 3.5
         });
     }
 
@@ -99,8 +99,11 @@ const App = () => {
                 "step": drone.droneDuration
             }
         };
+
+        var lineDistance = turf.length(turf_data, {units: 'miles'});
         var arc = get_arc_coordinates(turf_data);
         drone.arc = arc;
+        drone.totaldistance = lineDistance
 
     }
 
@@ -202,23 +205,23 @@ const App = () => {
                 'icon-rotation-alignment': 'map',
                 'icon-allow-overlap': true,
                 'icon-ignore-placement': true
-            },
-            "paint": {
-                "icon-color": "#00ff00"
             }
-
         }
     }
 
     function setPosition(drone) {
-
         var current_idx = TICK - drone.droneStartTime;
-        
+
         if (current_idx-1 < 0) {
-            current_idx = 1;
+            drone.droneStatus = "Scheduled";
+            current_idx = 0;
         }
-        if (current_idx >= drone.droneDuration - 1) {
+        else if (current_idx >= drone.droneDuration - 1) {
+            drone.droneStatus = "Reached";
             current_idx = drone.droneDuration - 2;
+        }
+        else {
+            drone.droneStatus = "En Route";
         }
 
         drone.droneCurrentIdx = current_idx;
@@ -236,6 +239,7 @@ const App = () => {
         );
         drone.bearing = bearing;
 
+        drone.travelleddistanceratio = current_idx / arc.length;
 
         frontarcRoute.push(createLineData(frontarc, "front"));
         backarcRoute.push(createLineData(backarc, "back"));
@@ -261,6 +265,15 @@ const App = () => {
         map.addLayer(createSymbolLayerData("endPoints", 'marker-15', 3));
         map.addLayer(createSymbolLayerData("currentdrones", 'airport-15', 1.5));
 
+        map.on('click', 'currentdroneslayer', function (e) {
+            focusPopup("link-"+e.features[0].properties.droneID);
+            var activeItem = document.getElementsByClassName('active');
+            if (activeItem[0]) {
+              activeItem[0].classList.remove('active');
+            }
+            var listing = document.getElementById('listing-' + e.features[0].properties.droneID);
+            listing.classList.add('active');
+        });
         buildLocationList(drone_info_feat);
 
     }
@@ -307,15 +320,21 @@ const App = () => {
 
                 link.addEventListener('click', function(e) {
                     focusPopup(this.id);
+                    var activeItem = document.getElementsByClassName('active');
+                    if (activeItem[0]) {
+                      activeItem[0].classList.remove('active');
+                    }
+                    this.parentNode.classList.add('active');
                 });
+
 
             }
         });
     }
 
-
     function movePopup() {
         if (selected_drone) {
+
             var popUps = document.getElementsByClassName('mapboxgl-popup');
             /** Check if there is already a popup on the map and if so, remove it */
             if (popUps[0]) popUps[0].remove();
@@ -324,7 +343,14 @@ const App = () => {
                     closeOnClick: false
                 })
                 .setLngLat(selected_drone.properties.latlng)
-                .setHTML('<h3>' + selected_drone.properties.droneName + '</h3><p>  <b>ID: </b>' + selected_drone.properties.droneID + '</p>')
+                .setHTML(
+                    '<h3>' + selected_drone.properties.droneName + '</h3>' +
+                    // '<span id=\'popUpclose\' onclick=\'this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode); return false;\'>x</span>'+
+                    '<b>ID: </b>' + selected_drone.properties.droneID + '<br>' +
+                    '<b>Status: </b>' + selected_drone.properties.droneStatus + '<br>' +
+                    '<b>Dist Travelled: </b>' + parseInt(selected_drone.properties.totaldistance * selected_drone.properties.travelleddistanceratio) + ' miles<br>' +
+                    '<b>Total Distance: </b>' + parseInt(selected_drone.properties.totaldistance) + ' miles<br>'
+                )
                 .addTo(map);
         }
 
@@ -332,7 +358,6 @@ const App = () => {
 
 
     function initDrones() {
-
         fetch(dronesUrl).then(res => res.json()).then(data => {
             drone_info = data;
             drone_info_feat = drone_info.features;
