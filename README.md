@@ -3,12 +3,12 @@ This repository contains a demo web application displaying current status of del
 ![](DroneStatus.gif)
 
 ### Tech
-* [Backend] - Flask (Python)
+* [Backend] - Flask (Python 3)
 * [Frontend] - React + MapboxGL JS
 
 ### How to run?
 
-First, we need to setup and start our backend server. I am currently using python version Python 3.8.4 but this should work on any python3 version.
+First, we need to setup and start our backend server. I am currently using python version 3.8.4 but this should work on any python 3 version.
 
 Move to backend folder
 ```sh
