@@ -25,9 +25,9 @@ Install python dependencies and start flask server
 (venv) $ pip install -r requirements.txt
 (venv) $ flask run
 ```
-This will start our backend server at http://127.0.0.1:5000/ (default).
+This will start our backend server at http://127.0.0.1:5000/ (default). 
 
-Now we need to setup and start our frontend server. For that, 
+Now we need to setup and start our frontend server. For that, open new console at repo's root directory and then
 
 Move to the frontend folder.
 ```sh
