@@ -96,7 +96,7 @@ export function createSymbolLayerData(source, icon, icon_size) {
 
 
 export function createPopupDiv(data){
-    return "<h3>" + data.properties.droneName + "</h3>" +
+    return "<h4>" + data.properties.droneName + "</h4>" +
             "<b>ID: </b>" +
             data.properties.droneID +
             "<br>" +
@@ -114,18 +114,29 @@ export function createPopupDiv(data){
             " miles<br>"
 }
 
+export function remove_active_status(){
+    var activeItem = document.getElementsByClassName("active");
+    if (activeItem[0]) {
+        activeItem[0].classList.remove("active");
+    }
+}
 
 export function get_distance(data){
     return turf.length(data, { units: "miles" });
 }
 
-export function get_turf_arc_coordinates(currentFeature) {
-    var lineDistance = turf.length(currentFeature, { units: "miles" });
+export function get_turf_arc_coordinates(data) {
+    var lineDistance = turf.length(data);
     var arc = [];
+    // console.log("LINE D: ", data,lineDistance, lineDistance / data.properties.step)
     for (
-      var j = 0; j < lineDistance; j += lineDistance / currentFeature.properties.step) {
-      var segment = turf.along(currentFeature, j);
+      var j = 0;
+      j < lineDistance;
+      j += lineDistance / data.properties.step
+    ) {
+      var segment = turf.along(data, j);
       arc.push(segment.geometry.coordinates);
     }
+
     return arc;
   }

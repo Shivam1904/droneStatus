@@ -5,8 +5,7 @@
 }
 
 .overlay {
-  top: 10px;
-  left: 50%;
+  margin-top: 10px;
 }
 
 .overlay button {
@@ -44,9 +43,14 @@
   padding: 0 10px;
 }
 
+.heading h4{
+  margin-top: 15px;
+}
+
 .listings {
   height: 100%;
   overflow: auto;
+  margin-top: 10px;
   padding-bottom: 60px;
 }
 
@@ -54,7 +58,7 @@
   display: block;
   border-bottom: 1px solid #eee;
   padding: 10px;
-  text-decoration: none;
+  text-decoration: none !important;
 }
 
 .listings .item:last-child { border-bottom: none; }
@@ -68,10 +72,20 @@
 .listings .item .title small { font-weight: 400; }
 
 .listings .item.active .title,
-.listings .item .title:hover { color: #8cc63f; }
+.listings .item .title:hover { color: #00853e;}
+.listings .item:hover { background-color: #f8f8f8;}
 
 .listings .item.active {
-  background-color: #f8f8f8;
+  color: #fff;
+  background-color: #4f8053;
+}
+
+.listings .item.active .title, .listings .item .title:active {
+  color: #fff;
+}
+.listings .item.active .title, .listings .item .title:hover {
+  text-decoration: none !important;
+
 }
 
 ::-webkit-scrollbar {
@@ -136,7 +150,6 @@ a:hover {
 
 .mapboxgl-popup-content h3 {
   background: #91c949;
-  color: #fff;
   margin: 0;
   display: block;
   padding: 5px;
@@ -145,6 +158,8 @@ a:hover {
 }
 
 .mapboxgl-popup-content h4 {
+  background: #91c949;
+  color: #fff;
   margin: 0;
   display: block;
   padding: 10px;
@@ -153,6 +168,7 @@ a:hover {
 
 .mapboxgl-popup-content div {
   padding: 10px;
+  color: #fff;
 }
 
 .mapboxgl-container .leaflet-marker-icon {

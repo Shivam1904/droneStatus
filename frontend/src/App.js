@@ -11,7 +11,7 @@ const App = () => {
 
   // Variables used to visualize the motion of drones
   var TICK = 0;
-  var MAX_TICK = 800;
+  var MAX_TICK = 9600;
 
   var drone_info_feat;
   var frontarcRoute = [],
@@ -32,14 +32,18 @@ const App = () => {
 
   var popup = new mapboxgl.Popup({
       closeButton: false,
-      closeOnClick: false,
+      closeOnClick: true,
     });
 
-  function flyToDrone(latlng) {
+  function flyToDrone(latlng, zoom) {
     map.flyTo({
       center: latlng,
-      zoom: 6.5,
+      zoom: zoom,
     });
+  }
+
+  function resetZoom(){
+    flyToDrone(constants.MAP_CENTER, constants.MAP_ZOOM)
   }
 
   function createPopUp(currentFeature) {
@@ -47,24 +51,10 @@ const App = () => {
     movePopup();
   }
 
-  function get_turf_arc_coordinates(currentFeature) {
-    var lineDistance = turf.length(currentFeature);
-    var arc = [];
-    // console.log("LINE D: ", currentFeature,lineDistance, lineDistance / currentFeature.properties.step)
-    for (
-      var j = 0;
-      j < lineDistance;
-      j += lineDistance / currentFeature.properties.step
-    ) {
-      var segment = turf.along(currentFeature, j);
-      arc.push(segment.geometry.coordinates);
-    }
-
-    return arc;
-  }
+  
 
   function increase_tick_and_animate() {
-    map.resize();
+    // map.resize();
 
     // Reset data for new tick
     frontarcRoute = [];
@@ -92,6 +82,9 @@ const App = () => {
       features: currentdrones,
     });
 
+    // Update Popup Location
+    movePopup();
+
     // Increment tick to visualize next frame/tick
     TICK++;
     if (TICK < MAX_TICK) {
@@ -112,7 +105,7 @@ const App = () => {
       },
     };
 
-    drone.arc = get_turf_arc_coordinates(turf_data);
+    drone.arc = utils.get_turf_arc_coordinates(turf_data);
     drone.totaldistance = utils.get_distance(turf_data);
   }
 
@@ -166,87 +159,78 @@ const App = () => {
     );
   }
 
+  function showLatLngPopup(data){
+    map.getCanvas().style.cursor = "pointer";
+    var coordinates = data.features[0].geometry.coordinates.slice();
+    var lat = coordinates[0].toFixed(3);
+    var lng = coordinates[1].toFixed(3);
+    popup.setLngLat(coordinates).setHTML(lat + ", " + lng).addTo(map);
+  }
+
   function initSources() {
     load_img(constants.GREEN_PIN_URL, "green-icon");
     load_img(constants.RED_PIN_URL, "red-icon");
 
+    // Add all source on map
     map.addSource("frontarc", utils.createGeoJSONFeature(frontarcRoute));
     map.addSource("backarc", utils.createGeoJSONFeature(backarcRoute));
     map.addSource("sourcePoints", utils.createGeoJSONFeature(sourcePoints));
     map.addSource("endPoints", utils.createGeoJSONFeature(endPoints));
     map.addSource("currentdrones", utils.createGeoJSONFeature(currentdrones));
 
-    map.addLayer(utils.createLineLayerData("frontarc", "blue", 2));
+    // Add layer for showing route.
+    map.addLayer(utils.createLineLayerData("frontarc", "green", 2));
     map.addLayer(utils.createLineLayerData("backarc", "red", 2));
 
+    // Add layer for showing src, dst an drone.
     map.addLayer(utils.createSymbolLayerData("sourcePoints", "green-icon", 0.1));
     map.addLayer(utils.createSymbolLayerData("endPoints", "red-icon", 0.08));
-    map.addLayer(utils.createSymbolLayerData("currentdrones", "airport-15", 1.5));
+    map.addLayer(utils.createSymbolLayerData("currentdrones", "airport-15", 2));
 
+    // Show pop-up when any drone is clicked.
+    map.on('click', function(e) {
+      // e.preventDefault();
+      selected_drone = null;
+      popup.remove();
+      
+    });
+    
     map.on("click", "currentdroneslayer", function (e) {
-      console.log("I am getting clicked");
-      focusPopup("link-" + e.features[0].properties.droneID);
-      var activeItem = document.getElementsByClassName("active");
-      if (activeItem[0]) {
-        activeItem[0].classList.remove("active");
-      }
-      var listing = document.getElementById(
-        "listing-" + e.features[0].properties.droneID
-      );
+      var drone_id = e.features[0].properties.droneID;
+      focusPopup("link-" + drone_id);
+      utils.remove_active_status();
+      var listing = document.getElementById("listing-" + drone_id);
       listing.classList.add("active");
     });
 
-    var popup = new mapboxgl.Popup({
-      closeButton: false,
-      closeOnClick: false,
+    
+    // Show LatLng Popup on hover over source/destination
+    map.on("mousemove", "sourcePointslayer", function (e) {
+      showLatLngPopup(e)
     });
-
-    map.on("mouseenter", "sourcePointslayer", function (e) {
-      // Change the cursor style as a UI indicator.
-      map.getCanvas().style.cursor = "pointer";
-      var coordinates = e.features[0].geometry.coordinates.slice();
-      var lat, lng;
-      lat = coordinates[0].toFixed(3);
-      lng = coordinates[1].toFixed(3);
-      popup
-        .setLngLat(coordinates)
-        .setHTML(lat + ", " + lng)
-        .addTo(map);
+    map.on("mousemove", "endPointslayer", function (e) {
+      showLatLngPopup(e)
     });
     map.on("mouseleave", "sourcePointslayer", function () {
-      map.getCanvas().style.cursor = "";
+      map.getCanvas().style.cursor = ""; 
       popup.remove();
-    });
-
-    map.on("mouseenter", "endPointslayer", function (e) {
-      // Change the cursor style as a UI indicator.
-      map.getCanvas().style.cursor = "pointer";
-      var coordinates = e.features[0].geometry.coordinates.slice();
-      var lat, lng;
-      lat = coordinates[0].toFixed(3);
-      lng = coordinates[1].toFixed(3);
-      popup
-        .setLngLat(coordinates)
-        .setHTML(lat + ", " + lng)
-        .addTo(map);
     });
     map.on("mouseleave", "endPointslayer", function () {
       map.getCanvas().style.cursor = "";
       popup.remove();
     });
 
-    buildLocationList(drone_info_feat);
+    
 
-    document
-      .getElementById("reset-zoom")
-      .addEventListener("click", function () {
-        // Set the coordinates of the original point back to origin
-        map.flyTo({
-          center: [-115.2780982990751, 36.15243],
-          zoom: 6,
-        });
-      });
-  }
+    // Build the sidebar listing all drones
+    buildDroneList(drone_info_feat);
+
+    // Set default focus
+    document.getElementById("reset-zoom").addEventListener(
+        "click", function () {resetZoom();}
+    );
+
+}
 
   function getClickedDrone(id) {
     var clickedListing;
@@ -260,11 +244,11 @@ const App = () => {
 
   function focusPopup(id) {
     var clickedListing = getClickedDrone(id);
-    flyToDrone(clickedListing.properties.latlng);
+    flyToDrone(clickedListing.properties.latlng, 6.5);
     createPopUp(clickedListing);
   }
 
-  const buildLocationList = (data) => {
+  const buildDroneList = (data) => {
     data.forEach(function (store, i) {
       console.log(store.geometry.type);
       if (store.geometry.type == "Point") {
@@ -290,15 +274,13 @@ const App = () => {
 
         link.addEventListener("click", function (e) {
           focusPopup(this.id);
-          var activeItem = document.getElementsByClassName("active");
-          if (activeItem[0]) {
-            activeItem[0].classList.remove("active");
-          }
+          utils.remove_active_status();
           this.parentNode.classList.add("active");
         });
       }
     });
   };
+
 
   function movePopup() {
     if (selected_drone) {
@@ -306,9 +288,7 @@ const App = () => {
       /** Check if there is already a popup on the map and if so, remove it */
       if (popUps[0]) popUps[0].remove();
 
-      var popup = new mapboxgl.Popup({
-        closeOnClick: true,
-      })
+      popup
         .setLngLat(selected_drone.properties.latlng)
         .setHTML(
           utils.createPopupDiv(selected_drone)
@@ -316,6 +296,7 @@ const App = () => {
         .addTo(map);
     }
   }
+
 
   function initDrones() {
     fetch(constants.BACKEND_URL)
@@ -328,6 +309,7 @@ const App = () => {
           setPosition(drone);
         });
         initSources();
+        map.resize();
         increase_tick_and_animate();
       });
   }
