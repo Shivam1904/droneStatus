@@ -1,4 +1,3 @@
-/* eslint-disable no-use-before-define */
 import React, { useRef, useEffect } from 'react'
 import mapboxgl from 'mapbox-gl'
 import * as turf from '@turf/turf'
@@ -256,7 +255,7 @@ function App () {
 
         /* Add details to the individual listing. */
         const details = listing.appendChild(document.createElement('div'))
-        details.innerHTML = prop.droneID
+        details.innerHTML = 'ID: ' + prop.droneID
 
         link.addEventListener('click', function (e) {
           focusPopup(this.id)
