@@ -10,16 +10,16 @@ const App = () => {
   const mapContainerRef = useRef(null);
 
   // Variables used to visualize the motion of drones
-  var TICK = 0;
-  var MAX_TICK = 9600;
+  let TICK = 0;
+  let MAX_TICK = 9600;
 
-  var drone_info_feat;
-  var frontarcRoute = [],
+  let drone_info_feat;
+  let frontarcRoute = [],
     backarcRoute = [];
-  var sourcePoints = [],
+  let sourcePoints = [],
     endPoints = [],
     currentdrones = [];
-  var selected_drone = null;
+  let selected_drone = null;
 
   // Initialize map
   mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -30,7 +30,7 @@ const App = () => {
     zoom: 6,
   });
 
-  var popup = new mapboxgl.Popup({
+  let popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: true,
     });
@@ -94,7 +94,7 @@ const App = () => {
   }
 
   function setDroneArc(drone) {
-    var turf_data = {
+    let turf_data = {
       type: "Feature",
       geometry: {
         type: "LineString",
@@ -110,8 +110,8 @@ const App = () => {
   }
 
   function setPosition(drone) {
-    var current_idx = TICK - drone.droneStartTime;
-    var arc = drone.arc;
+    let current_idx = TICK - drone.droneStartTime;
+    let arc = drone.arc;
 
     if (current_idx - 1 < 0) {
       drone.droneStatus = "Scheduled";
@@ -130,11 +130,11 @@ const App = () => {
 
     drone.latlng = arc[current_idx];
 
-    var frontarc, backarc;
+    let frontarc, backarc;
     frontarc = arc.slice(0, current_idx);
     backarc = arc.slice(current_idx + 1);
 
-    var bearing = turf.bearing(
+    let bearing = turf.bearing(
       turf.point(arc[current_idx]),
       turf.point(arc[current_idx + 1])
     );
@@ -161,9 +161,9 @@ const App = () => {
 
   function showLatLngPopup(data){
     map.getCanvas().style.cursor = "pointer";
-    var coordinates = data.features[0].geometry.coordinates.slice();
-    var lat = coordinates[0].toFixed(3);
-    var lng = coordinates[1].toFixed(3);
+    let coordinates = data.features[0].geometry.coordinates.slice();
+    let lat = coordinates[0].toFixed(3);
+    let lng = coordinates[1].toFixed(3);
     popup.setLngLat(coordinates).setHTML(lat + ", " + lng).addTo(map);
   }
 
@@ -183,8 +183,8 @@ const App = () => {
     map.addLayer(utils.createLineLayerData("backarc", "red", 2));
 
     // Add layer for showing src, dst an drone.
-    map.addLayer(utils.createSymbolLayerData("sourcePoints", "green-icon", 0.1));
-    map.addLayer(utils.createSymbolLayerData("endPoints", "red-icon", 0.08));
+    map.addLayer(utils.createSymbolLayerData("sourcePoints", "green-icon", 0.12));
+    map.addLayer(utils.createSymbolLayerData("endPoints", "red-icon", 0.13));
     map.addLayer(utils.createSymbolLayerData("currentdrones", "airport-15", 2));
 
     // Show pop-up when any drone is clicked.
@@ -196,10 +196,10 @@ const App = () => {
     });
     
     map.on("click", "currentdroneslayer", function (e) {
-      var drone_id = e.features[0].properties.droneID;
+      let drone_id = e.features[0].properties.droneID;
       focusPopup("link-" + drone_id);
       utils.remove_active_status();
-      var listing = document.getElementById("listing-" + drone_id);
+      let listing = document.getElementById("listing-" + drone_id);
       listing.classList.add("active");
     });
 
@@ -233,8 +233,8 @@ const App = () => {
 }
 
   function getClickedDrone(id) {
-    var clickedListing;
-    for (var i = 0; i < drone_info_feat.length; i++) {
+    let clickedListing;
+    for (let i = 0; i < drone_info_feat.length; i++) {
       if (id === "link-" + drone_info_feat[i].properties.droneID) {
         clickedListing = drone_info_feat[i];
       }
@@ -243,7 +243,7 @@ const App = () => {
   }
 
   function focusPopup(id) {
-    var clickedListing = getClickedDrone(id);
+    let clickedListing = getClickedDrone(id);
     flyToDrone(clickedListing.properties.latlng, 6.5);
     createPopUp(clickedListing);
   }
@@ -284,7 +284,7 @@ const App = () => {
 
   function movePopup() {
     if (selected_drone) {
-      var popUps = document.getElementsByClassName("mapboxgl-popup");
+      let popUps = document.getElementsByClassName("mapboxgl-popup");
       /** Check if there is already a popup on the map and if so, remove it */
       if (popUps[0]) popUps[0].remove();
 
@@ -304,7 +304,7 @@ const App = () => {
       .then((data) => {
         drone_info_feat = data.features;
         drone_info_feat.forEach((dr) => {
-          var drone = dr.properties;
+          let drone = dr.properties;
           setDroneArc(drone);
           setPosition(drone);
         });
@@ -314,9 +314,18 @@ const App = () => {
       });
   }
 
+  function resizeMapWindow() {
+    map.resize();
+  }
+
   // Intiated when component mounts
   useEffect(() => {
     // add navigation control
+    const temp = document.getElementById("map").offsetWidth;
+    console.log(temp, temp[0]);
+
+    window.addEventListener('resize', resizeMapWindow);
+
     map.addControl(new mapboxgl.NavigationControl());
     map.addControl(
       new mapboxgl.FullscreenControl({

@@ -115,7 +115,7 @@ export function createPopupDiv(data){
 }
 
 export function remove_active_status(){
-    var activeItem = document.getElementsByClassName("active");
+    let activeItem = document.getElementsByClassName("active");
     if (activeItem[0]) {
         activeItem[0].classList.remove("active");
     }
@@ -126,15 +126,14 @@ export function get_distance(data){
 }
 
 export function get_turf_arc_coordinates(data) {
-    var lineDistance = turf.length(data);
-    var arc = [];
-    // console.log("LINE D: ", data,lineDistance, lineDistance / data.properties.step)
+    let lineDistance = turf.length(data);
+    let arc = [];
     for (
-      var j = 0;
+      let j = 0;
       j < lineDistance;
       j += lineDistance / data.properties.step
     ) {
-      var segment = turf.along(data, j);
+      let segment = turf.along(data, j);
       arc.push(segment.geometry.coordinates);
     }
 
