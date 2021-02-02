@@ -25,7 +25,7 @@ function App () {
     container: 'map',
     style: constants.MAPBOX_STYLE_URL,
     center: constants.MAP_CENTER,
-    zoom: 6
+    zoom: constants.MAP_ZOOM
   })
 
   const popup = new mapboxgl.Popup({
@@ -33,6 +33,7 @@ function App () {
     closeOnClick: true
   })
 
+  // Move cenyer of the map at specified zoom
   function flyToDrone (latlng, zoom) {
     map.flyTo({
       center: latlng,
@@ -40,17 +41,19 @@ function App () {
     })
   }
 
+  // Set back to default zoom
   function resetZoom () {
     flyToDrone(constants.MAP_CENTER, constants.MAP_ZOOM)
   }
 
+  // Create popup using drone features
   function createPopUp (currentFeature) {
     selectedDrone = currentFeature
     movePopup()
   }
 
+  // Increase tick to visualising real time moving drones
   function increaseTickAndAnimate () {
-    // resizeMapWindow();
     // Reset data for new tick
     frontarcRoute = []
     backarcRoute = []
@@ -88,6 +91,7 @@ function App () {
     }
   }
 
+  // Fetch curved arc coordinates using turf
   function setDroneArc (drone) {
     const turfData = {
       type: 'Feature',
@@ -104,6 +108,7 @@ function App () {
     drone.totaldistance = utils.getDistance(turfData)
   }
 
+  // Set drone position on map
   function setPosition (drone) {
     let currentIdx = TICK - drone.droneStartTime
     const arc = drone.arc
@@ -131,6 +136,7 @@ function App () {
     )
     drone.bearing = bearing
 
+    // Add coordinates already covered to frontarcRoute and remaining to backarcRoute
     frontarcRoute.push(utils.createLineData(arc.slice(0, currentIdx), 'front'))
     backarcRoute.push(utils.createLineData(arc.slice(currentIdx + 1), 'back'))
 
@@ -140,6 +146,7 @@ function App () {
     currentdrones.push(utils.createDroneData(arc[currentIdx], drone, 'drone'))
   }
 
+  // Loads image from given url
   function loadImg (url, varName) {
     map.loadImage(
       url,
@@ -150,6 +157,7 @@ function App () {
     )
   }
 
+  // Show LatLng popup
   function showLatLngPopup (data) {
     map.getCanvas().style.cursor = 'pointer'
     const coordinates = data.features[0].geometry.coordinates.slice()
@@ -184,7 +192,6 @@ function App () {
       selectedDrone = null
       popup.remove()
     })
-
     map.on('click', 'currentdroneslayer', function (e) {
       const droneId = e.features[0].properties.droneID
       focusPopup('link-' + droneId)
@@ -193,7 +200,7 @@ function App () {
       listing.classList.add('active')
     })
 
-    // Show LatLng Popup on hover over source/destination
+    // Show LatLng Popup on hover over source/destination marker
     map.on('mousemove', 'sourcePointslayer', function (e) {
       showLatLngPopup(e)
     })
@@ -218,6 +225,7 @@ function App () {
     )
   }
 
+  // Get drone from it's ID
   function getClickedDrone (id) {
     let clickedListing
     for (let i = 0; i < droneInfoFeat.length; i++) {
@@ -227,33 +235,55 @@ function App () {
     }
     return clickedListing
   }
-
+  
+  // Focis amd
   function focusPopup (id) {
     const clickedListing = getClickedDrone(id)
     flyToDrone(clickedListing.properties.latlng, 6.5)
     createPopUp(clickedListing)
   }
 
+  // reset map's window size
+  function resizeMapWindow () {
+    map.resize()
+  }
+
+  // Update the position of popup while animation.
+  function movePopup () {
+    if (selectedDrone) {
+      const popUps = document.getElementsByClassName('mapboxgl-popup')
+      // Check if there is already a popup on the map and if so, remove it
+      if (popUps[0]) { popUps[0].remove() }
+
+      popup
+        .setLngLat(selectedDrone.properties.latlng)
+        .setHTML(
+          utils.createPopupDiv(selectedDrone)
+        )
+        .addTo(map)
+    }
+  }
+
+  // Update side bar use for disoplaying all drones
   const buildDroneList = (data) => {
     data.forEach(function (store, i) {
       if (store.geometry.type === 'Point') {
         const prop = store.properties
 
-        /* Add a new listing section to the sidebar. */
+        // Add a new listing section to the sidebar.
         const listings = document.getElementById('listings')
         const listing = listings.appendChild(document.createElement('div'))
-        /* Assign a unique `id` to the listing. */
         listing.id = 'listing-' + prop.droneID
-        // Assign the `item` class to each listing for styling.
         listing.className = 'item'
 
+        // Add anchor tag
         const link = listing.appendChild(document.createElement('a'))
         link.href = '#'
         link.className = 'title'
         link.id = 'link-' + prop.droneID
         link.innerHTML = prop.droneName
 
-        /* Add details to the individual listing. */
+        // Add details to the individual listing.
         const details = listing.appendChild(document.createElement('div'))
         details.innerHTML = 'ID: ' + prop.droneID
 
@@ -266,21 +296,7 @@ function App () {
     })
   }
 
-  function movePopup () {
-    if (selectedDrone) {
-      const popUps = document.getElementsByClassName('mapboxgl-popup')
-      /** Check if there is already a popup on the map and if so, remove it */
-      if (popUps[0]) { popUps[0].remove() }
-
-      popup
-        .setLngLat(selectedDrone.properties.latlng)
-        .setHTML(
-          utils.createPopupDiv(selectedDrone)
-        )
-        .addTo(map)
-    }
-  }
-
+  // Initialize all drones and move
   function initDrones () {
     fetch(constants.BACKEND_URL)
       .then((res) => res.json())
@@ -294,10 +310,6 @@ function App () {
         resizeMapWindow()
         increaseTickAndAnimate()
       })
-  }
-
-  function resizeMapWindow () {
-    map.resize()
   }
 
   // Intiated when component mounts
