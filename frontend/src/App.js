@@ -307,7 +307,7 @@ function App () {
       resizeMapWindow()
       initDrones()
     })
-  }, [])
+  })
 
   return <div className="map-container" ref={mapContainerRef} />
 }
