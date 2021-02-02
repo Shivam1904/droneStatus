@@ -1,5 +1,6 @@
 # Drone Status App
 This repository contains a demo web application displaying current status of delivery-drones. 
+![](DroneStatus.gif)
 
 ### Tech
 * [Backend] - Flask (Python)
